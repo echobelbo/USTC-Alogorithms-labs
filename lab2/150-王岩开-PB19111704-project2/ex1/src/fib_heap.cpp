@@ -26,7 +26,7 @@ void FIB_NODE_LINK(FIB_NODE* x, FIB_NODE* y)
     y->right_sibling->left_sibling = last;
     y->right_sibling = first;
 }
-void INSERT(FIB_HEAP* H, int key)
+int INSERT(FIB_HEAP* H, int key)
 {
     FIB_NODE* x = (struct FIB_NODE* )malloc(sizeof(FIB_NODE));
 
@@ -35,6 +35,7 @@ void INSERT(FIB_HEAP* H, int key)
     x->parent = NULL;
     x->child = NULL;
     x->mark = false;
+    x->key = key;
     if(H->min == NULL)
     {
         H->min = x;
@@ -51,6 +52,7 @@ void INSERT(FIB_HEAP* H, int key)
             H->min = x;
     }
     H->n = H->n + 1;
+    return H->n;
 }
 
 int MINIMUM(FIB_HEAP* H)
@@ -88,7 +90,7 @@ FIB_NODE* EXTRACT_MIN(FIB_HEAP* H)
         }
         H->n = H->n - 1;
     }
-    KEY_TO_NODE[z->key] = 0;
+    KEY_TO_NODE[z->key] = NULL;
     return z;
 }
 
@@ -105,8 +107,8 @@ FIB_HEAP* UNION(FIB_HEAP* H1, FIB_HEAP* H2)
 
 void CONSOLIDATE(FIB_HEAP* H)
 {
-    FIB_NODE* A[10];
-    for(int i = 0; i < 10; i++)
+    FIB_NODE* A[11];
+    for(int i = 0; i < 11; i++)
         A[i] = NULL;
     for(FIB_NODE* w = H->min->right_sibling; w != H->min; w = w->right_sibling)
     {
@@ -125,6 +127,8 @@ void CONSOLIDATE(FIB_HEAP* H)
                 FIB_NODE* z = x;
                 x = y;
                 y = z;
+                KEY_TO_NODE[x->key] = x;
+                KEY_TO_NODE[y->key] = y;
             }
             LINK(H, y->key, x->key);
             A[d] = NULL;
@@ -133,7 +137,7 @@ void CONSOLIDATE(FIB_HEAP* H)
         A[d] = x;
     }
     H->min = NULL;
-    for(int i = 0; i < 10 ; i++)
+for(int i = 0; i < 11 ; i++)
     {
         if(A[i] != NULL)
         {
@@ -181,7 +185,7 @@ void LINK(FIB_HEAP* H, int y_key, int x_key)
     y->mark = false;
 }
 
-void DECREASE_KEY(FIB_HEAP* H, int x_key, int k_key)
+FIB_NODE* DECREASE_KEY(FIB_HEAP* H, int x_key, int k_key)
 {
     if(x_key < k_key)
         exit(-1);
@@ -200,6 +204,7 @@ void DECREASE_KEY(FIB_HEAP* H, int x_key, int k_key)
     {
         H->min = x;
     }
+    return H->min;
 }
 
 void CUT(FIB_HEAP* H, int x_key, int y_key)
@@ -241,4 +246,11 @@ void CASCADING_CUT(FIB_HEAP* H, int y_key)
             CASCADING_CUT(H, z->key);
         }
     }
+}
+
+FIB_NODE* DELETE(FIB_HEAP* H, int x_key)
+{
+    DECREASE_KEY(H, x_key, 0);
+    EXTRACT_MIN(H);
+    return H->min;
 }
