@@ -1,7 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS 
 #include "fib_heap.h"
 #include<stdlib.h>
-
+#include<iostream>
+using namespace std;
+#define OUT cout
 FIB_NODE* KEY_TO_NODE[1001];//用于存储每个key对应的FIB_NODE地址
 
 FIB_NODE* SEARCH_KEY(int key)
@@ -19,12 +21,22 @@ FIB_HEAP* MAKE_HEAP(void)
 }
 void FIB_NODE_LINK(FIB_NODE* x, FIB_NODE* y)
 {
-    FIB_NODE* last = x->left_sibling;
-    FIB_NODE* first = x;   
-    last->right_sibling = y->right_sibling;
-    first->left_sibling = y;
-    y->right_sibling->left_sibling = last;
-    y->right_sibling = first;
+    if(x == NULL)
+        return;
+    else if(y == NULL)
+    {
+        y = x;
+    }
+    else
+    {
+        FIB_NODE* last = x->left_sibling;
+        FIB_NODE* first = x;   
+        last->right_sibling = y->right_sibling;
+        first->left_sibling = y;
+        y->right_sibling->left_sibling = last;
+        y->right_sibling = first;
+    }
+    
 }
 int INSERT(FIB_HEAP* H, int key)
 {
@@ -69,11 +81,12 @@ FIB_NODE* EXTRACT_MIN(FIB_HEAP* H)
         {
             FIB_NODE* child_last = z->child->left_sibling;
             FIB_NODE* child_first = z->child;   
-            // child_first->left_sibling = z;
-            // child_last->right_sibling = z->right_sibling;
-            // z->right_sibling->left_sibling = child_last;
-            // z->right_sibling = child_first;
-            FIB_NODE_LINK(z->child, z);
+            child_first->left_sibling = z;
+            child_last->right_sibling = z->right_sibling;
+            z->right_sibling->left_sibling = child_last;
+            z->right_sibling = child_first;
+            // FIB_NODE_LINK(z->child, z);
+            z->child = NULL;
             for(FIB_NODE* i = child_first; i != child_last; i = i->right_sibling)
             {
                 i->parent = NULL;
@@ -83,25 +96,41 @@ FIB_NODE* EXTRACT_MIN(FIB_HEAP* H)
         z->right_sibling->left_sibling = z->left_sibling;
         if(z == z->right_sibling)
             H->min = NULL;
-        else
+        else  
         {
             H->min = z->right_sibling;
             CONSOLIDATE(H);
         }
         H->n = H->n - 1;
     }
-    KEY_TO_NODE[z->key] = NULL;
     return z;
 }
 
 FIB_HEAP* UNION(FIB_HEAP* H1, FIB_HEAP* H2)
 {
+    
+    
     FIB_HEAP* H = MAKE_HEAP();
+    // OUT << "H1n\t" << H1->n << "\n";
+    // OUT << "H2n\t" << H2->n << "\n";
     H->min = H1->min;
-    FIB_NODE_LINK(H2->min, H->min);
+    // FIB_NODE_LINK(H2->min, H->min);
+    if(!H->min)
+        H->min = H2->min;
+    else if(!H2->min);
+    else
+    {
+        FIB_NODE* last = H2->min->left_sibling;
+        FIB_NODE* first = H2->min;   
+        last->right_sibling = H->min->right_sibling;
+        first->left_sibling = H->min;
+        H->min->right_sibling->left_sibling = last;
+        H->min->right_sibling = first;
+    }
     if((H1->min == NULL) || (H2->min != NULL && H2->min->key < H1->min->key))
         H->min = H2->min;
     H->n = H1->n + H2->n;
+    // OUT << "Hn\t"<< H->n << "\n";
     return H;
 }
 
@@ -110,19 +139,40 @@ void CONSOLIDATE(FIB_HEAP* H)
     FIB_NODE* A[11];
     for(int i = 0; i < 11; i++)
         A[i] = NULL;
-    for(FIB_NODE* w = H->min->right_sibling; w != H->min; w = w->right_sibling)
+    bool flag = false;
+    FIB_NODE* x = H->min;
+    //test
+    // OUT << x->key << "before CON \n";
+    // for(FIB_NODE* temp = x->right_sibling; temp != x; temp = temp->right_sibling)
+    // {
+    //     OUT << temp->key << " ";
+    // }
+    // OUT << "\n";
+    //test
+    while(true)
     {
-        FIB_NODE* x = w;
+        
         int d = x->degree;
+        //test
+        //test
+        // OUT << x->key << "\n";
+        // for(FIB_NODE* temp = x->right_sibling; temp != x; temp = temp->right_sibling)
+        // {
+        //     OUT << temp->key << " ";
+        // }
+        // OUT << "\n";
+        //test
+        //test
         while(A[d] != NULL)
         {
             FIB_NODE* y = A[d];
+            if(y == x)
+            {
+                flag = true;
+                break;
+            }
             if(x->key > y->key)
             {
-                x->right_sibling->left_sibling = y;
-                x->left_sibling->right_sibling = y;
-                y->right_sibling->left_sibling = x;
-                y->left_sibling->right_sibling = x;
 
                 FIB_NODE* z = x;
                 x = y;
@@ -133,30 +183,36 @@ void CONSOLIDATE(FIB_HEAP* H)
             LINK(H, y->key, x->key);
             A[d] = NULL;
             d++;
-        }
-        A[d] = x;
+        } 
+        if(flag)
+            break; 
+        A[d] = x;     
+        x = x->right_sibling;
+        
     }
-    H->min = NULL;
-for(int i = 0; i < 11 ; i++)
-    {
-        if(A[i] != NULL)
-        {
-            if(H->min == NULL)
-                H->min = A[i];
-            else
-            {
-                A[i]->right_sibling = H->min->right_sibling;
-                H->min->right_sibling->left_sibling = A[i];
-                H->min->right_sibling = A[i];
-                A[i]->left_sibling = H->min;
-                
-                if(A[i]->key < H->min->key)
-                {
-                    H->min = A[i];
-                }
-            }
-        }
-    }
+            //test
+        //     OUT << "\nA\n";
+        // for(int i = 0; i < 11; i ++)
+        // {
+        //     if(A[i] != NULL)
+        //         OUT << A[i] ->key << "\t";
+
+        // }
+        // OUT << "\n";
+        // OUT << x->key << "final\n";
+        // for(FIB_NODE* temp = x->right_sibling; temp != x; temp = temp->right_sibling)
+        // {
+        //     OUT << temp->key << " ";
+        // }
+        // OUT << "\n";
+        //test
+    H->min = x;
+    FIB_NODE* temp = x;
+    do{
+        if(temp->key < H->min->key)
+            H->min = temp;
+        temp = temp->right_sibling;
+    }while(temp != x);
 }
 
 void LINK(FIB_HEAP* H, int y_key, int x_key)
@@ -180,6 +236,7 @@ void LINK(FIB_HEAP* H, int y_key, int x_key)
         y->left_sibling = x->child;
         x->child->right_sibling->left_sibling = y;
         x->child->right_sibling = y;
+        y->parent = x;
     }
     x->degree++;
     y->mark = false;
@@ -223,7 +280,8 @@ void CUT(FIB_HEAP* H, int x_key, int y_key)
         if(y->child == x)
             y->child = x->right_sibling;
     } 
-    x->parent = NULL;      
+    y->degree --;
+    x->parent = NULL;          
     x->right_sibling = H->min->right_sibling;
     x->left_sibling = H->min;
     H->min->right_sibling->left_sibling = x;
@@ -248,9 +306,15 @@ void CASCADING_CUT(FIB_HEAP* H, int y_key)
     }
 }
 
-FIB_NODE* DELETE(FIB_HEAP* H, int x_key)
+int DELETE(FIB_HEAP* H, int x_key)
 {
     DECREASE_KEY(H, x_key, 0);
+    // OUT << H->min->key << " ";
+    // for(FIB_NODE* temp = H->min->right_sibling; temp != H->min; temp = temp->right_sibling)
+    // {
+    //     OUT << temp->key << " ";
+    // }
+    // OUT << "\n";
     EXTRACT_MIN(H);
-    return H->min;
+    return H->n;
 }
