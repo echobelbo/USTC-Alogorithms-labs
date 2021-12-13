@@ -27,4 +27,4 @@ void LINK(FIB_HEAP* H, int y_key, int x_key);
 FIB_NODE* DECREASE_KEY(FIB_HEAP* H, int x_key, int k_key);
 void CUT(FIB_HEAP* H, int x_key, int y_key);
 void CASCADING_CUT(FIB_HEAP* H, int y_key);
-int DELETE(FIB_HEAP* H, int x_key);
+int DELETE_FIB(FIB_HEAP* H, int x_key);

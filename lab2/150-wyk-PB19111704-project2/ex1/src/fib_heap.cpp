@@ -306,7 +306,7 @@ void CASCADING_CUT(FIB_HEAP* H, int y_key)
     }
 }
 
-int DELETE(FIB_HEAP* H, int x_key)
+int DELETE_FIB(FIB_HEAP* H, int x_key)
 {
     DECREASE_KEY(H, x_key, 0);
     // OUT << H->min->key << " ";
