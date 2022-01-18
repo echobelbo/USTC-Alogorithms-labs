@@ -11,7 +11,7 @@ using namespace std;
 #define IN_FILE "./4_2_input.txt"
 #define OUT_FILE "./result.txt"
 #define TIME_FILE "./time.txt"
-#define ROUT cout
+#define ROUT out
 #define TOUT time_out
 
 string T;
@@ -24,6 +24,11 @@ ofstream out;
 ofstream time_out;
 int d[4] = {2, 2, 10, 10};
 int q[4] = {13, 1009, 13, 1009};
+
+double time_sheet[5][4];
+
+LARGE_INTEGER t1,t2,tc;
+
 int main(void)
 {
     in.open(IN_FILE);
@@ -46,6 +51,9 @@ int main(void)
             
             int fake = 0;
             int h = 1;
+
+            QueryPerformanceFrequency(&tc);
+            QueryPerformanceCounter(&t1);
 
             for(int i_0 = 1;i_0 <= m - 1;i_0++)
             {
@@ -89,6 +97,8 @@ int main(void)
                 }
             }
             fake_time[j] = fake;
+            QueryPerformanceCounter(&t2);
+            time_sheet[i][j] = (double)(1000 * t2.QuadPart - 1000 * t1.QuadPart)/(double)tc.QuadPart; 
         }
         real = real/4;
         ROUT << real << endl;
@@ -102,6 +112,15 @@ int main(void)
             ROUT << s_time[i_0] << " ";
         }
         ROUT << endl << endl;
+    }
+    for(int i = 0; i < 4; i++)
+    {
+        TOUT << "(" << d[i] << ", " << q[i] << ")\n";
+        for(int j = 0; j < 5; j++)
+        {
+            TOUT << time_sheet[j][i] << "ms ";
+        }
+        TOUT << endl;
     }
     in.close();
     out.close();
